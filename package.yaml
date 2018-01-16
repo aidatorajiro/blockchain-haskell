@@ -1,0 +1,53 @@
+name:                BlockchainHaskell
+version:             0.1.0.0
+github:              "aidatorajiro/blockchain-haskell"
+license:             MIT
+author:              "Torajiro Aida"
+maintainer:          "kawarusosu@zoho.com"
+copyright:           "2018 Torajiro Aida"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/aidatorajiro/blockchain-haskell#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- binary
+- bytestring
+- base16-bytestring
+- hspec
+- QuickCheck
+
+library:
+  source-dirs: src
+
+executables:
+  BlockchainHaskell-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - BlockchainHaskell
+
+tests:
+  BlockchainHaskell-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - BlockchainHaskell
