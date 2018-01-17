@@ -30,3 +30,12 @@ parsetx hex = runGet (parseTransaction True <|> parseTransaction False) (fst $ d
 main :: IO ()
 main = print $ parsetx "01000000000101....."
 ```
+
+## Features
+
+### implemented
+- Parse a Bitcoin transaction
+
+### not implemented
+- Simulate a Bitcoin system monadically
+- Bitcoin daemon
