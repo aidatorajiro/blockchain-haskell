@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
+-- This file has been generated from package.yaml by hpack version 0.28.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c3e46594db3f21defdf4bbb6c1812408b5c4d06cda6821535547d1ccd1f48eb9
+-- hash: 10d2eab0f17c58dd53df9cef3dbd1e6850c6c0cf659c1ff42268c04d8bd0c171
 
 name:           BlockchainHaskell
 version:        0.1.0.0
@@ -16,7 +16,6 @@ license:        MIT
 license-file:   LICENSE
 build-type:     Simple
 cabal-version:  >= 1.10
-
 extra-source-files:
     ChangeLog.md
     README.md
@@ -36,10 +35,10 @@ library
     , bytestring
     , hspec
   exposed-modules:
+      Bitcoin
       Lib
-      ParseTransaction
-      ShowTransaction
       Transaction
+      ParserUtil
   other-modules:
       Paths_BlockchainHaskell
   default-language: Haskell2010

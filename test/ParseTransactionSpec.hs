@@ -6,15 +6,13 @@ import Data.Binary.Get
 import Control.Applicative ((<|>))
 
 import Transaction
-import ParseTransaction
-import ShowTransaction
 
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
 
-parsetx hex = runGet (parseTransaction True <|> parseTransaction False) (fst $ decode $ pack hex)
-
 test :: IO ()
 test = hspec $ do
-  describe "ParseTransaction.parseTransaction"
+  describe "ParseTransaction.parseTransaction" $ do
+    -- parseTransactionFromHexString "02000000032e0c96da80852566acc19593241280864ae1d7e58c59be615b924148a8e0448d000000004847304402204b4bec8414b91b511b67d57da80bd97d3bf7d48e84b858d78a423496478e2f0202204f80802b95d847941bb15deaa960a91b74a3a987b6e1e14f4f96b365acca951c01fdffffff711a78ac566f7a6de2987d2be08a12966ea4742ece6ce0db49ba0186c4427d9e0000000048473044022055bfd2f65be0412fdac8f39165e99640f863dcaeae689bef45a6127e02387c8a02201836378b31061b9fdb6c4fdd3617a45a454a770632942ec47c5be091d66785d801fdffffff8ec4f91b0a6e9cb2498b5e3e5576d1b1842d8685fce0bc56da09a935bc6c63bc00000000484730440220102b7eb7c2d20809cace8882c4da2dc42963945ddbd7088306ebaf1a316a7850022044e490a0a230adf41a8e046761569efc132899b68e7191801d2d5045f91cbe2001fdffffff02e4d1052a01000000160014d1ad7293ccf5aff68be90d2da6ed0e840fa98ae500e40b5402000000160014ee31c6c262423c09f715c9d21aa1381a8e127ae0cb000000"
+    return ()
