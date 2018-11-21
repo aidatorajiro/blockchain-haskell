@@ -3,25 +3,34 @@ module Transaction (
   Txout(..),
   Witness(..),
   Transaction(..),
-  parseTransaction,
-  parseTxin,
-  parseTxout, 
-  parseWitness,
-  parseTransactionFromHexString
+  getTransaction,
+  getTxin,
+  getTxout, 
+  getWitness,
+  getTransactionFromHexString,
+  putTransaction,
+  putTxin,
+  putTxout, 
+  putWitness,
+  putTransactionToHexString
   ) where
 
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base16.Lazy as Base16
-import Data.ByteString.Lazy.Char8 (pack)
 import Data.ByteString.Base16
 import Data.List
 import Data.Maybe (fromJust)
 import Data.Binary.Get
+import Data.Binary.Put
 import Data.Char
 import GHC.Word
 import Control.Applicative ((<|>), Alternative, optional)
 import Control.Monad (replicateM, when, unless, guard)
 import ParserUtil
+
+-----------------------------------------
+-- DEFINITION OF TRANSACTION DATA TYPE --
+-----------------------------------------
 
 data Txin = Txin {
   txinHash       :: B.ByteString,  -- | hash of the to-be-used transaction
@@ -124,57 +133,116 @@ instance Show Witness where
 instance Show Transaction where
   show x = join (transactionLines x)
 
+-------------------------
+-- PARSING TRANSACTION --
+-------------------------
+
 -- | Parse a raw transaction.
 -- | First argument represents wheather use Segwit-style transaction format (BIP 144) or not.
-parseTransaction :: Bool -> Get Transaction
-parseTransaction isSegwit = do
+getTransaction :: Get Transaction
+getTransaction = do
   version <- cast getWord32le
+
+  isSegwit <- (==0) <$> lookAhead getWord8
 
   -- If segwit
   marker <- opt isSegwit (cast getWord8)
   flag   <- opt isSegwit (cast getWord8)
 
-  -- Run parseTxin <numTxins> times
-  numTxins <- parseVI
-  txins <- replicateM numTxins parseTxin
+  -- Run getTxin <numTxins> times
+  numTxins <- getVI
+  txins <- replicateM numTxins getTxin
 
-  -- Run parseTxout <numTxouts> times
-  numTxouts <- parseVI
-  txouts <- replicateM numTxouts parseTxout
+  -- Run getTxout <numTxouts> times
+  numTxouts <- getVI
+  txouts <- replicateM numTxouts getTxout
 
   -- Parse witness if segwit.
-  witness <- opt isSegwit (parseWitness numTxins)
+  witness <- opt isSegwit (getWitness numTxins)
 
   locktime <- cast getWord32le
 
-  flip unless (fail "parse failed") =<< isEmpty
+  flip unless (fail "get failed") =<< isEmpty
 
   return $ Transaction isSegwit version marker flag txins txouts witness locktime
 
-parseTransactionFromHexString :: [Char] -> Transaction
-parseTransactionFromHexString hex = runGet (parseTransaction True <|> parseTransaction False) (fst $ Base16.decode $ pack hex)
+getTransactionFromHexString :: String -> Transaction
+getTransactionFromHexString = runGet getTransaction . decodeHexLazy
 
-parseTxin :: Get Txin
-parseTxin = do
+getTxin :: Get Txin
+getTxin = do
   hash   <- getByteString 32
   index  <- cast getWord32le
-  script <- getByteString =<< parseVI
+  script <- getByteString =<< getVI
   seqno  <- cast getWord32le
   
   return $ Txin hash index script seqno
 
-parseTxout :: Get Txout
-parseTxout = do
+getTxout :: Get Txout
+getTxout = do
   amount <- cast getWord64le
-  script <- getByteString =<< parseVI
+  script <- getByteString =<< getVI
 
   return $ Txout amount script
 
 -- | get a witness whose number of fields is given int
-parseWitness :: Int -> Get Witness
-parseWitness numFields =
+getWitness :: Int -> Get Witness
+getWitness numFields =
   fmap Witness $
     replicateM numFields $ do
-      numItems <- parseVI
+      numItems <- getVI
       replicateM numItems $ 
-        getByteString =<< parseVI
+        getByteString =<< getVI
+
+----------------------------
+-- GENERATING TRANSACTION --
+----------------------------
+
+putTransaction :: Transaction -> Put
+putTransaction (Transaction isSegwit version marker flag txins txouts witness locktime) = do
+  putWord32le (fromIntegral version)
+
+  -- If segwit
+  opt isSegwit (putWord8 $ fromIntegral $ fromJust $ marker)
+  opt isSegwit (putWord8 $ fromIntegral $ fromJust $ flag)
+
+  -- Run putTxin for every txins
+  putVI (length txins)
+  mapM putTxin txins
+
+  -- Run putTxout for every txouts
+  putVI (length txouts)
+  mapM putTxout txouts
+
+  -- Parse witness if segwit.
+  opt isSegwit (putWitness $ fromJust $ witness)
+
+  putWord32le $ fromIntegral locktime
+
+  return ()
+
+putTxin :: Txin -> Put
+putTxin (Txin hash index script seqno) = do
+  putByteString hash
+  putWord32le (fromIntegral index)
+  putVI (B.length script)
+  putByteString script
+  putWord32le (fromIntegral seqno)
+
+putTxout :: Txout -> Put
+putTxout (Txout amount script) = do
+  putWord64le (fromIntegral amount)
+  putVI (B.length script)
+  putByteString script
+
+putWitness :: Witness -> Put
+putWitness (Witness fields) = do
+  mapM_ (\field -> do
+    putVI (length field)
+    mapM_ (\item -> do
+        putVI (B.length item)
+        putByteString item
+      ) field) fields
+
+putTransactionToHexString :: Transaction -> String
+putTransactionToHexString = encodeHexLazy . snd . runPutM . putTransaction
