@@ -246,3 +246,11 @@ putWitness (Witness fields) = do
 
 putTransactionToHexString :: Transaction -> String
 putTransactionToHexString = encodeHexLazy . snd . runPutM . putTransaction
+
+----------------------------
+-- CONVERTING TRANSACTION --
+----------------------------
+
+toUnsignedTransaction :: Transaction -> Transaction
+toUnsignedTransaction (Transaction isSegwit version marker flag txins txouts witness locktime) =
+  Transaction isSegwit version marker flag (map (\(Txin hash index script seqno) -> Txin hash index "" seqno) txins) txouts (Witness [] <$ witness) locktime
