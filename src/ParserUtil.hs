@@ -33,7 +33,7 @@ be x = do
     then return w
     else fail "mismatch at be"
 
--- | Cast to Int
+-- | Cast to an Integral to another.
 cast :: (Integral a, Integral b) => Get a -> Get b
 cast = fmap fromIntegral
 

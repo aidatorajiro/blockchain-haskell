@@ -252,4 +252,12 @@ putTransactionToHexString = encodeHex . snd . runPutM . putTransaction
 
 toUnsignedTransaction :: Transaction -> Transaction
 toUnsignedTransaction (Transaction isSegwit version marker flag txins txouts witness locktime) =
-  Transaction isSegwit version marker flag (map (\(Txin hash index script seqno) -> Txin hash index mempty seqno) txins) txouts (Witness [] <$ witness) locktime
+  Transaction
+    isSegwit
+    version
+    marker
+    flag
+    (map (\(Txin hash index script seqno) -> Txin hash index mempty seqno) txins) -- nullify all scripts
+    txouts
+    (Witness [] <$ witness) -- nullify witness
+    locktime
