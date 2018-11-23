@@ -15,9 +15,8 @@ module Transaction (
   putTransactionToHexString
   ) where
 
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Base16.Lazy as Base16
-import Data.ByteString.Base16
+import qualified Data.ByteString.Lazy as B
+import Data.ByteString.Base16.Lazy
 import Data.List
 import Data.Maybe (fromJust)
 import Data.Binary.Get
@@ -167,13 +166,13 @@ getTransaction = do
   return $ Transaction isSegwit version marker flag txins txouts witness locktime
 
 getTransactionFromHexString :: String -> Transaction
-getTransactionFromHexString = runGet getTransaction . decodeHexLazy
+getTransactionFromHexString = runGet getTransaction . decodeHex
 
 getTxin :: Get Txin
 getTxin = do
-  hash   <- getByteString 32
+  hash   <- getLazyByteString 32
   index  <- cast getWord32le
-  script <- getByteString =<< getVI
+  script <- getLazyByteString =<< getVI
   seqno  <- cast getWord32le
   
   return $ Txin hash index script seqno
@@ -181,7 +180,7 @@ getTxin = do
 getTxout :: Get Txout
 getTxout = do
   amount <- cast getWord64le
-  script <- getByteString =<< getVI
+  script <- getLazyByteString =<< getVI
 
   return $ Txout amount script
 
@@ -192,7 +191,7 @@ getWitness numFields =
     replicateM numFields $ do
       numItems <- getVI
       replicateM numItems $ 
-        getByteString =<< getVI
+        getLazyByteString =<< getVI
 
 ----------------------------
 -- GENERATING TRANSACTION --
@@ -223,17 +222,17 @@ putTransaction (Transaction isSegwit version marker flag txins txouts witness lo
 
 putTxin :: Txin -> Put
 putTxin (Txin hash index script seqno) = do
-  putByteString hash
+  putLazyByteString hash
   putWord32le (fromIntegral index)
   putVI (B.length script)
-  putByteString script
+  putLazyByteString script
   putWord32le (fromIntegral seqno)
 
 putTxout :: Txout -> Put
 putTxout (Txout amount script) = do
   putWord64le (fromIntegral amount)
   putVI (B.length script)
-  putByteString script
+  putLazyByteString script
 
 putWitness :: Witness -> Put
 putWitness (Witness fields) = do
@@ -241,11 +240,11 @@ putWitness (Witness fields) = do
     putVI (length field)
     mapM_ (\item -> do
         putVI (B.length item)
-        putByteString item
+        putLazyByteString item
       ) field) fields
 
 putTransactionToHexString :: Transaction -> String
-putTransactionToHexString = encodeHexLazy . snd . runPutM . putTransaction
+putTransactionToHexString = encodeHex . snd . runPutM . putTransaction
 
 ----------------------------
 -- CONVERTING TRANSACTION --
@@ -253,4 +252,4 @@ putTransactionToHexString = encodeHexLazy . snd . runPutM . putTransaction
 
 toUnsignedTransaction :: Transaction -> Transaction
 toUnsignedTransaction (Transaction isSegwit version marker flag txins txouts witness locktime) =
-  Transaction isSegwit version marker flag (map (\(Txin hash index script seqno) -> Txin hash index "" seqno) txins) txouts (Witness [] <$ witness) locktime
+  Transaction isSegwit version marker flag (map (\(Txin hash index script seqno) -> Txin hash index mempty seqno) txins) txouts (Witness [] <$ witness) locktime

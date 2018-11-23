@@ -1,18 +1,16 @@
 module ParserUtil where
 
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString.Char8 as Char8
-import qualified Data.ByteString.Lazy.Char8 as LChar8
-import qualified Data.ByteString.Base16 as Base16
-import qualified Data.ByteString.Base16.Lazy as LBase16
+import qualified Data.ByteString.Lazy as B
+import qualified Data.ByteString.Lazy.Char8 as Char8
+import qualified Data.ByteString.Base16.Lazy as Base16
 import Data.Binary.Get
 import Data.Binary.Put
 import GHC.Word
 import Control.Applicative ((<|>))
+import GHC.Int (Int64)
 
 -- | Parse Bitcoin's VarInt.
-getVI :: Get Int
+getVI :: Integral a => Get a
 getVI = 
   cast (be 0xFF >> getWord64le) <|>
   cast (be 0xFE >> getWord32le) <|>
@@ -20,7 +18,7 @@ getVI =
   cast getWord8
 
 -- | Serialize Bitcoin's VarInt.
-putVI :: Int -> Put
+putVI :: Integral a => a -> Put
 putVI n
   | n <= 0xfc = putWord8 (fromIntegral n)
   | n <= 0xffff = putWord8 0xFD >> putWord16le (fromIntegral n)
@@ -36,7 +34,7 @@ be x = do
     else fail "mismatch at be"
 
 -- | Cast to Int
-cast :: Integral a => Get a -> Get Int
+cast :: (Integral a, Integral b) => Get a -> Get b
 cast = fmap fromIntegral
 
 -- | if given bool is true, do given action and return Just. if false, return Nothing.
@@ -47,12 +45,5 @@ opt b a = if b then Just <$> a else return Nothing
 decodeHex :: String -> B.ByteString
 decodeHex = fst . Base16.decode . Char8.pack
 
--- | hex string to byte string (lazy)
-decodeHexLazy :: String -> LB.ByteString
-decodeHexLazy = fst . LBase16.decode . LChar8.pack
-
 encodeHex :: B.ByteString -> String
 encodeHex = Char8.unpack . Base16.encode
-
-encodeHexLazy :: LB.ByteString -> String
-encodeHexLazy = LChar8.unpack . LBase16.encode
