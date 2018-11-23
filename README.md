@@ -35,6 +35,7 @@ main = print $ parsetx "01000000000101....."
 
 ### implemented
 - Parse a Bitcoin transaction
+- Serialize a Bitcoin transaction
 
 ### not implemented
 - Simulate a Bitcoin system monadically
