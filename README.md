@@ -8,10 +8,13 @@ A blockchain library for haskell.
 Use a haskell library [binary](https://hackage.haskell.org/package/binary) to parse.
 
 ```haskell
-ParseTransaction :: bool -> Get Transaction
+getTransaction :: Get Transaction
 ```
 
-The input bool tells whether the given transaction is segwit style or not.
+```haskell
+getTransactionFromHexString :: String -> Transaction
+```
+Both functions will automatically detect whether the given transaction is segwit format or not.
 
 An example:
 
@@ -34,6 +37,14 @@ See <https://github.com/aidatorajiro/blockchain-haskell/blob/master/test/ParseTr
 ```haskell
 putTransaction :: Transaction -> Put
 ```
+
+```haskell
+putTransactionToHexString :: Transaction -> String
+```
+
+Set `transactionIsSegwit` True to include `transactionMarker`, `transactionFlag` and `transactionWitness` to the output.
+
+An example:
 
 ```haskell
 import Data.ByteString.Base16.Lazy (encode, decode)
@@ -79,5 +90,7 @@ main = print $ putTransactionToHexString $ Transaction {
 - Serialize a Bitcoin transaction
 
 ### not implemented
+- Blocks
+- Verification
+- Signing
 - Simulate a Bitcoin system monadically
-- Bitcoin daemon
